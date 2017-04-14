@@ -1,0 +1,5 @@
+hostname: "MyHostname"
+vlans:
+  - "10-15"
+  - "100-120"
+  - "1000"

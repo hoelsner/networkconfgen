@@ -1,0 +1,30 @@
+{# This Jinja2 Template uses custom functions from the networkconfgen python library #}
+!
+hostname {{ hostname }}
+!
+{# expand the given VLAN list to single entries #}
+{% set expanded_vlans = [] %}
+{% for vlan_range in vlans %}
+    {% if vlan_range|expand_vlan_list|length > 1 %}
+        {% for vl in vlan_range|expand_vlan_list %}
+            {% do expanded_vlans.append(vl) %}
+        {% endfor %}
+    {% else %}
+        {% do expanded_vlans.append(vlan_range|int) %}
+    {% endif %}
+{% endfor %}
+{% for vlan in expanded_vlans %}
+    vlan {{ vlan }}
+{% endfor %}
+!
+{# configure a trunk interface with manual pruning #}
+interface po1
+     switchport mode trunk
+     {% for vlans in expanded_vlans|sort|batch(10) %}
+         {% if loop.index == 1 %}
+         switchport trunk allowed vlan {{ vlans|join(",") }}
+         {% else %}
+         switchport trunk allowed vlan add {{ vlans|join(",") }}
+         {% endif %}
+     {% endfor %}
+!
