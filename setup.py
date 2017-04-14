@@ -18,7 +18,7 @@ setup(
     version="0.1.0",
     description="Jinja2 based configuration generator with some extensions required to generate configurations "
                 "for network devices",
-    url="http://github.com/hoelsner/networkconfgen",
+    url="https://github.com/hoelsner/networkconfgen",
     author="Henry Ölsner",
     author_email="henry@codingnetworker.com",
     license="MIT",
@@ -26,14 +26,14 @@ setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
-        'Topic :: System :: Networking'
+        'Topic :: System :: Networking',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     install_requires=dependencies,
     extras_require={
