@@ -26,11 +26,11 @@ Before you begin, I assume that you are already familiar with the Jinja2 Templat
 
 The following custom filters are added to the standard Jinja2 template syntax:
 
-  * filter to convert strings to VLAN names (e.g. `{{ "Data Network"|valid_vlan_name }}` will render to `Data_Network`) 
+  * filter to **convert strings to VLAN names** (e.g. `{{ "Data Network"|valid_vlan_name }}` will render to `Data_Network`) 
   * filter to convert an integer (0-32) 
-    * to a dotted decimal network mask (e.g. `{{ "24"|dotted_decimal }}` will render to `255.255.255.0`)
-    * to a dotted decimal hostmask/wildcard mask (e.g. `{{ "24"|wildcard_mask }}` will render to `0.0.0.255`)  
-  * filter to convert a given VLAN range to a list with individual values (e.g. `{{ "2-4"|wildcard_expand_vlan_list }}` will render to `[2, 3, 4]`)
+    * to a dotted decimal **network mask** (e.g. `{{ "24"|dotted_decimal }}` will render to `255.255.255.0`)
+    * to a dotted decimal **hostmask/wildcard mask** (e.g. `{{ "24"|wildcard_mask }}` will render to `0.0.0.255`)  
+  * filter to **convert a given VLAN range to a list** with individual values (e.g. `{{ "2-4"|wildcard_expand_vlan_list }}` will render to `[2, 3, 4]`)
   * an experimental filter to convert interface names between vendors (e.g. `{{ "Gi0/0/1"|convert_interface_name("juniper_junos") }}` will render to `ge-0/0/0`)
 
 The following jinja2 extension are enabled by default: 
@@ -67,6 +67,8 @@ if __name__ == "__main__":
 The result of the `render_from_string` (and `render_from_file`) functions is an instance of the class `NetworkConfGenResult` with 
 the following attributes and methods:
 
+| attribute/method             | description                                                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `template_result`            | The result of the template rendering process (if no error during rendering occurred)                               |
 | `render_error`               | `True` if an error during rendering occurred (e.g. Syntax Errors)                                                  |
 | `content_error`              | `True` if one of the custom filters produces an invalid result, indicate that the result may not be trustworthy    |
