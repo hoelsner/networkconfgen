@@ -3,7 +3,7 @@ import jinja2
 import os
 import json
 from networkconfgen import custom_filters
-from networkconfgen.constants import ERROR_UNKNOWN, ERROR_INVALID_VLAN_RANGE, ERROR_INVALID_VALUE
+from networkconfgen.constants import ERROR_UNKNOWN, ERROR_INVALID_VLAN_RANGE, ERROR_INVALID_VALUE, ERROR_CODES
 
 logger = logging.getLogger("networkconfgen")
 
@@ -108,11 +108,6 @@ class NetworkConfGen(object):
     """
     _template_engine = None
     _searchpath = None
-    _error_codes = [
-        ERROR_UNKNOWN,
-        ERROR_INVALID_VLAN_RANGE,
-        ERROR_INVALID_VALUE
-    ]
 
     def __init__(self, searchpath=None,
                  block_start_string="{%",
@@ -154,6 +149,14 @@ class NetworkConfGen(object):
         self._template_engine.filters["convert_interface_name"] = custom_filters.convert_interface_name
         self._template_engine.add_extension('jinja2.ext.do')
 
+    def _add_error_codes(self, parameter_dictionary):
+        if type(parameter_dictionary) is not dict:
+            raise AttributeError("parameter_dictionary must be a dict type")
+
+        parameter_dictionary.update(ERROR_CODES)
+
+        return parameter_dictionary
+
     def render_from_string(self, template_content, parameters):
         """
         render a Jinja2 template from a string using the custom Jinja2 environment
@@ -172,7 +175,7 @@ class NetworkConfGen(object):
 
         try:
             template = self._template_engine.from_string(template_content)
-            obj.template_result = template.render(parameters)
+            obj.template_result = template.render(self._add_error_codes(parameters))
 
         except jinja2.TemplateSyntaxError as ex:
             obj.error_text = "Template Syntax Exception in line '%d' (%s)" % (ex.lineno, ex)
@@ -212,7 +215,7 @@ class NetworkConfGen(object):
         try:
             logger.debug("render template from file '%s'" % os.path.abspath(os.path.join(self._searchpath, file)))
             template = self._template_engine.get_template(file)
-            obj.template_result = template.render(parameters)
+            obj.template_result = template.render(self._add_error_codes(parameters))
 
         except jinja2.TemplateNotFound as ex:
             obj.error_text = "Template %s not found" % (ex.name)

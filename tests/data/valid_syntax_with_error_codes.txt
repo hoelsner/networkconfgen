@@ -1,0 +1,7 @@
+!
+hostname {{ hostname }}
+{{ _ERROR_.unknown }}
+{{ _ERROR_.invalid_vlan_range }}
+{{ _ERROR_.invalid_value }}
+{{ _ERROR_.template }}
+!

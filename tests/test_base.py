@@ -654,3 +654,57 @@ vlan {{ vlan }}
                                             parameters=params)
 
         self.verify_networkconfgenresult(result=result, expected_json_result=expected_json_result)
+
+    def test_error_code_variables_with_file(self):
+        """
+        Test the existence of the error codes during the parsing process 
+        """
+        confgen = NetworkConfGen(searchpath=os.path.join("tests", "data"))
+
+        param = {"hostname": "MyName"}
+        expected_result = "!\nhostname MyName\n$$UNKOWN_ERROR_IN_CUSTOM_FUNCTION$$\n" \
+                          "$$INVALID_VLAN_RANGE$$\n$$INVALID_VALUE$$\n$$TEMPLATE_ERROR$$\n!"
+        expected_json_result = {
+            "template_file_name": "valid_syntax_with_error_codes.txt",
+            "render_error": False,
+            "content_error": True,
+            "from_string": False,
+            "search_path": os.path.join("tests", "data"),
+            "template_result": expected_result,
+            "error_text": None
+        }
+
+        result = confgen.render_from_file(file=expected_json_result["template_file_name"], parameters=param)
+
+        self.verify_networkconfgenresult(result=result, expected_json_result=expected_json_result)
+
+    def test_error_code_variables_with_string(self):
+        """
+        Test the existence of the error codes during the parsing process 
+        """
+        confgen = NetworkConfGen(searchpath=os.path.join("tests", "data"))
+
+        template = """\
+!
+hostname {{ hostname }}
+{{ _ERROR_.unknown }}
+{{ _ERROR_.invalid_vlan_range }}
+{{ _ERROR_.invalid_value }}
+{{ _ERROR_.template }}
+!"""
+        param = {"hostname": "MyName"}
+        expected_result = "!\nhostname MyName\n$$UNKOWN_ERROR_IN_CUSTOM_FUNCTION$$\n" \
+                          "$$INVALID_VLAN_RANGE$$\n$$INVALID_VALUE$$\n$$TEMPLATE_ERROR$$\n!"
+        expected_json_result = {
+            "template_file_name": None,
+            "render_error": False,
+            "content_error": True,
+            "from_string": True,
+            "search_path": None,
+            "template_result": expected_result,
+            "error_text": None
+        }
+
+        result = confgen.render_from_string(template_content=template, parameters=param)
+
+        self.verify_networkconfgenresult(result=result, expected_json_result=expected_json_result)
