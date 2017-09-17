@@ -296,6 +296,62 @@ value {{ e }}
 
         self.verify_networkconfgenresult(result=result, expected_json_result=expected_json_result)
 
+    def test_content_error_parameter(self, monkeypatch):
+        """
+        test content error using the parameter error variable within the template
+        """
+        def re_match_mock(*args, **kwargs):
+            raise Exception("Unexpected exception")
+
+        monkeypatch.setattr(re, "match", re_match_mock)
+        confgen = NetworkConfGen()
+
+        template_string = "!\n{{ _ERROR_.parameter }}\n!"
+        param = {}
+        expected_result = "!\n$$PARAMETER_ERROR$$\n!"
+        expected_json_result = {
+            "template_file_name": None,
+            "render_error": False,
+            "content_error": True,
+            "from_string": True,
+            "search_path": None,
+            "template_result": expected_result,
+            "error_text": None
+        }
+
+        result = confgen.render_from_string(template_content=template_string,
+                                            parameters=param)
+
+        self.verify_networkconfgenresult(result=result, expected_json_result=expected_json_result)
+
+    def test_content_error_no_match_error(self, monkeypatch):
+        """
+        test content error when no match occurred
+        """
+        def re_match_mock(*args, **kwargs):
+            raise Exception("Unexpected exception")
+
+        monkeypatch.setattr(re, "match", re_match_mock)
+        confgen = NetworkConfGen()
+
+        template_string = "!\n{% set result = \"foobar\"|split_interface(\".*\d+.*\") %}{{ result.error }}\n!"
+        param = {}
+        expected_result = "!\n$$NO_MATCH_ERROR$$(pattern 'foobar' for '.*\\d+.*')\n!"
+        expected_json_result = {
+            "template_file_name": None,
+            "render_error": False,
+            "content_error": True,
+            "from_string": True,
+            "search_path": None,
+            "template_result": expected_result,
+            "error_text": None
+        }
+
+        result = confgen.render_from_string(template_content=template_string,
+                                            parameters=param)
+        
+        self.verify_networkconfgenresult(result=result, expected_json_result=expected_json_result)
+
     def test_valid_render_from_file(self):
         """test rendering from a file (allows the use of more
         advanced features of Jinja2, e.g. inheritance (http://jinja.pocoo.org/docs/2.9/templates/#template-inheritance))
@@ -614,6 +670,50 @@ vlan {{ vlan }}
             "var4": "FooBar",       # value won't change, no error is thrown in this case to maintain stability
         }
         expected_result = "!\nge-1/0/0\nFooBar\nte0/1/2\nFooBar\n!"
+        expected_json_result = {
+            "template_file_name": None,
+            "render_error": False,
+            "content_error": False,
+            "from_string": True,
+            "search_path": None,
+            "template_result": expected_result,
+            "error_text": None
+        }
+
+        result = confgen.render_from_string(template_content=template_string,
+                                            parameters=param)
+
+        self.verify_networkconfgenresult(result=result, expected_json_result=expected_json_result)
+
+    def test_split_interface_cisco_ios_filter(self, monkeypatch):
+        confgen = NetworkConfGen()
+
+        template_string = "!\n{% set result = intf_name|split_interface_cisco_ios %}" \
+                          "{{ result.chassis }} {{ result.module }} {{ result.port }}\n!"
+        param = {"intf_name": "Gi1/2/3"}
+        expected_result = "!\n1 2 3\n!"
+        expected_json_result = {
+            "template_file_name": None,
+            "render_error": False,
+            "content_error": False,
+            "from_string": True,
+            "search_path": None,
+            "template_result": expected_result,
+            "error_text": None
+        }
+
+        result = confgen.render_from_string(template_content=template_string,
+                                            parameters=param)
+
+        self.verify_networkconfgenresult(result=result, expected_json_result=expected_json_result)
+
+    def test_split_interface_juniper_junos_filter(self, monkeypatch):
+        confgen = NetworkConfGen()
+
+        template_string = "!\n{% set result = intf_name|split_interface_juniper_junos %}" \
+                          "{{ result.chassis }} {{ result.module }} {{ result.port }}\n!"
+        param = {"intf_name": "ge-0/1/2"}
+        expected_result = "!\n0 1 2\n!"
         expected_json_result = {
             "template_file_name": None,
             "render_error": False,

@@ -32,8 +32,8 @@ class NetworkConfGenResult(object):
         content_has_error = False
 
         if self.template_result is not None:
-            for e in [ERROR_INVALID_VALUE, ERROR_INVALID_VLAN_RANGE, ERROR_UNKNOWN]:
-                if e in self.template_result:
+            for e in ERROR_CODES["_ERROR_"].keys():
+                if ERROR_CODES["_ERROR_"][e] in self.template_result:
                     content_has_error = True
                     break
 
@@ -147,6 +147,9 @@ class NetworkConfGen(object):
         self._template_engine.filters["expand_vlan_list"] = custom_filters.expand_vlan_list
         self._template_engine.filters["wildcard_mask"] = custom_filters.wildcard_mask       # aka hostmask
         self._template_engine.filters["convert_interface_name"] = custom_filters.convert_interface_name
+        self._template_engine.filters["split_interface"] = custom_filters.split_interface
+        self._template_engine.filters["split_interface_cisco_ios"] = custom_filters.split_interface_cisco_ios
+        self._template_engine.filters["split_interface_juniper_junos"] = custom_filters.split_interface_juniper_junos
         self._template_engine.add_extension('jinja2.ext.do')
 
     def _add_error_codes(self, parameter_dictionary):

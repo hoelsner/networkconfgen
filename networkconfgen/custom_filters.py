@@ -5,7 +5,8 @@ import logging
 import re
 from ipaddress import IPv4Network
 from networkconfgen.constants import ERROR_UNKNOWN, ERROR_INVALID_VLAN_RANGE, ERROR_INVALID_VALUE, \
-    CISCO_INTERFACE_PATTERN, JUNIPER_INTERFACE_PATTERN, OS_CISCO_IOS, OS_JUNIPER_JUNOS
+    CISCO_INTERFACE_PATTERN, JUNIPER_INTERFACE_PATTERN, OS_CISCO_IOS, OS_JUNIPER_JUNOS, ERROR_PARAMETER, \
+    ERROR_REGEX, ERROR_NO_MATCH
 
 logger = logging.getLogger("networkconfgen")
 
@@ -174,3 +175,76 @@ def expand_vlan_list(vlan_list):
             result.extend(list(range(val_a, val_b + 1)))
 
     return result
+
+
+def split_interface(interface_regex, value):
+    """
+    convert an interface based on the given regular expression to a dictionary with all components, e.g.
+
+        regex: .*(?P<chassis>\d+)\/(?P<module>\d+)\/(?P<port>\d+).*
+        value: interface gi1/2/3
+
+    will return
+
+        {
+            "chassis": 1,
+            "module": 2,
+            "port": 3
+        }
+
+    or in case of an error to
+
+        {
+            "error": "message"
+        }
+
+    :param interface_regex: valid regular expression 
+    :param value: value that should be parsed
+    :return: dictionary with three possible 
+    """
+    if type(interface_regex) is not str:
+        return {"error": "%s(%s)" % (ERROR_PARAMETER, "invalid type for 'interface_regex'")}
+
+    if type(value) is not str:
+        return {"error": "%s(%s)" % (ERROR_PARAMETER, "invalid type for 'value'")}
+
+    try:
+        pattern = re.compile(interface_regex, re.IGNORECASE)
+
+    except Exception as ex:
+        return {"error": "%s(%s)" % (ERROR_REGEX, str(ex))}
+
+    match = pattern.match(value)
+
+    if match:
+        # check groups 'chassis', 'module'and 'port'
+        # if empty, a None value is used
+        result = match.groupdict()
+        valid_groups = ["chassis", "module", "port"]
+
+        # add None values if certain groups does not exist
+        for key in valid_groups:
+            result[key] = None if key not in result.keys() else result[key]
+
+        # delete other keys
+        keys_to_delete = []
+        for key in result.keys():
+            if key not in valid_groups:
+                keys_to_delete.append(key)
+
+        for key in keys_to_delete:
+            del result[key]
+
+    else:
+        # no match, return error message
+        result = {"error": "%s(pattern '%s' for '%s')" % (ERROR_NO_MATCH, interface_regex, value)}
+
+    return result
+
+
+def split_interface_cisco_ios(value):
+    return split_interface(".*%s.*" % CISCO_INTERFACE_PATTERN, value)
+
+
+def split_interface_juniper_junos(value):
+    return split_interface(".*%s.*" % JUNIPER_INTERFACE_PATTERN, value)

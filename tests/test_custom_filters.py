@@ -1,4 +1,4 @@
-from networkconfgen.constants import CISCO_INTERFACE_PATTERN, JUNIPER_INTERFACE_PATTERN
+from networkconfgen import constants as nc_constants
 from networkconfgen import custom_filters
 
 
@@ -13,7 +13,7 @@ def test_get_interface_components_string():
     }
 
     for key in test_strings.keys():
-        assert test_strings[key] == custom_filters.get_interface_components(key, CISCO_INTERFACE_PATTERN)
+        assert test_strings[key] == custom_filters.get_interface_components(key, nc_constants.CISCO_INTERFACE_PATTERN)
 
     # Test split of Juniper Interface Names
     test_strings = {
@@ -22,7 +22,7 @@ def test_get_interface_components_string():
     }
 
     for key in test_strings.keys():
-        assert test_strings[key] == custom_filters.get_interface_components(key, JUNIPER_INTERFACE_PATTERN)
+        assert test_strings[key] == custom_filters.get_interface_components(key, nc_constants.JUNIPER_INTERFACE_PATTERN)
 
 
 def test_dotted_decimal():
@@ -137,3 +137,174 @@ def test_expand_vlan_list():
 
     for e in test_data.keys():
         assert test_data[e] == custom_filters.expand_vlan_list(e)
+
+
+def test_split_interface():
+    # test invalid parameters (always requires strings)
+    expected_result = {
+        "error": "$$PARAMETER_ERROR$$(invalid type for 'value')"
+    }
+    result = custom_filters.split_interface(".*", 12)
+    assert result == expected_result
+
+    expected_result = {
+        "error": "$$PARAMETER_ERROR$$(invalid type for 'interface_regex')"
+    }
+    result = custom_filters.split_interface(12, "asd")
+    assert result == expected_result
+
+    # test invalid regex (unbalanced parenthesis)
+    result = custom_filters.split_interface(".*(.*", "asd")
+    assert "error" in result
+    assert "$$INVALID_REGEX_ERROR$$" in result["error"]
+
+    # test no match
+    result = custom_filters.split_interface(".*FooBar.*", "NoMatch")
+    assert "error" in result
+    assert "$$NO_MATCH_ERROR$$" in result["error"]
+
+    # test valid values
+    TEST_VALUES = {
+        # test delete of additional keys
+        "GigabitEthernet12/21": {
+            "pattern": ".*%s.*" % nc_constants.CISCO_INTERFACE_PATTERN,
+            "result": {
+                "chassis": None,
+                "module": "12",
+                "port": "21"
+            }
+        },
+        "GigabitEthernet11/21/31": {
+            "pattern": ".*%s.*" % nc_constants.CISCO_INTERFACE_PATTERN,
+            "result": {
+                "chassis": "11",
+                "module": "21",
+                "port": "31"
+            }
+        },
+        # test regular values
+        "12/21": {
+            "pattern": "%s" % nc_constants.CISCO_INTERFACE_PATTERN_ONLY,
+            "result": {
+                "chassis": None,
+                "module": "12",
+                "port": "21"
+            }
+        },
+        "11/21/31": {
+            "pattern": "%s" % nc_constants.CISCO_INTERFACE_PATTERN_ONLY,
+            "result": {
+                "chassis": "11",
+                "module": "21",
+                "port": "31"
+            }
+        }
+    }
+
+    for intf_value in TEST_VALUES.keys():
+        result = custom_filters.split_interface(
+            TEST_VALUES[intf_value]["pattern"],
+            intf_value
+        )
+
+        assert result == TEST_VALUES[intf_value]["result"], "Error with value '%s'" % intf_value
+
+
+def test_split_interface_cisco_ios():
+    # test invalid parameters (always requires strings)
+    expected_result = {
+        "error": "$$PARAMETER_ERROR$$(invalid type for 'value')"
+    }
+    result = custom_filters.split_interface_cisco_ios(12)
+    assert result == expected_result
+
+    # test no match
+    result = custom_filters.split_interface_cisco_ios("NoMatch")
+    assert "error" in result
+    assert "$$NO_MATCH_ERROR$$" in result["error"]
+
+    # test valid values
+    TEST_VALUES = {
+        "Ethernet9/32": {
+            "result": {
+                "chassis": None,
+                "module": "9",
+                "port": "32"
+            }
+        },
+        "FastEthernet1/1": {
+            "result": {
+                "chassis": None,
+                "module": "1",
+                "port": "1"
+            }
+        },
+        "GigabitEthernet12/21": {
+            "result": {
+                "chassis": None,
+                "module": "12",
+                "port": "21"
+            }
+        },
+        "GigabitEthernet11/21/31": {
+            "result": {
+                "chassis": "11",
+                "module": "21",
+                "port": "31"
+            }
+        },
+    }
+
+    for intf_value in TEST_VALUES.keys():
+        result = custom_filters.split_interface_cisco_ios(
+            intf_value
+        )
+
+        assert result == TEST_VALUES[intf_value]["result"], "Error with value '%s'" % intf_value
+
+
+def test_split_interface_juniper_junos():
+    # test invalid parameters (always requires strings)
+    expected_result = {
+        "error": "$$PARAMETER_ERROR$$(invalid type for 'value')"
+    }
+    result = custom_filters.split_interface_juniper_junos(12)
+    assert result == expected_result
+
+    # test no match
+    result = custom_filters.split_interface_juniper_junos("NoMatch")
+    assert "error" in result
+    assert "$$NO_MATCH_ERROR$$" in result["error"]
+
+    # test valid values
+    TEST_VALUES = {
+        "ge-0/0/32": {
+            "result": {
+                "chassis": "0",
+                "module": "0",
+                "port": "32"
+            }
+        },
+        "xe-3/12/1": {
+            "result": {
+                "chassis": "3",
+                "module": "12",
+                "port": "1"
+            }
+        },
+        "ge-21/34/56": {
+            "result": {
+                "chassis": "21",
+                "module": "34",
+                "port": "56"
+            }
+        },
+    }
+
+    for intf_value in TEST_VALUES.keys():
+        result = custom_filters.split_interface_juniper_junos(
+            intf_value
+        )
+
+        assert result == TEST_VALUES[intf_value]["result"], "Error with value '%s'" % intf_value
+
