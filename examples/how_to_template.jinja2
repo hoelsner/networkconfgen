@@ -22,9 +22,9 @@ interface po1
      switchport mode trunk
      {% for vlans in expanded_vlans|sort|batch(10) %}
          {% if loop.index == 1 %}
-         switchport trunk allowed vlan {{ vlans|join(",") }}
+             switchport trunk allowed vlan {{ vlans|join(",") }}
          {% else %}
-         switchport trunk allowed vlan add {{ vlans|join(",") }}
+             switchport trunk allowed vlan add {{ vlans|join(",") }}
          {% endif %}
      {% endfor %}
 !
