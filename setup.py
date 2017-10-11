@@ -15,7 +15,7 @@ else:
 
 setup(
     name="networkconfgen",
-    version="0.1.0",
+    version="0.2.0",
     description="Jinja2 based configuration generator with some extensions required to generate configurations "
                 "for network devices",
     url="https://github.com/hoelsner/networkconfgen",
